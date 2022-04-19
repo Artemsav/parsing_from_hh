@@ -11,8 +11,10 @@ from terminaltables import AsciiTable
 def predict_salary(salary_from, salary_to):
     if not salary_from:
         return int(salary_to)*0.8
-    if not salary_to:
+    elif not salary_to:
         return int(salary_from)*1.2
+    elif not salary_from and salary_to:
+        return None
     avg_salary = (int(salary_from) + int(salary_to))/2
     return avg_salary
 
@@ -30,15 +32,10 @@ def predict_rub_salary_sj(job):
         return None
     salary_from = job.get('payment_from')
     salary_to = job.get('payment_to')
-    if int(salary_from)== 0:
-        if int(salary_to) == 0:
+    if salary_from:
+        if salary_to:
             return None
     return predict_salary(salary_from, salary_to)
-
-
-def avg_salary(salary_list):
-    avg = reduce(lambda x, y: x + y, salary_list) / len(salary_list)
-    return avg
 
 
 def make_table(results, title):
@@ -57,11 +54,7 @@ def make_table(results, title):
     return table_instance.table
 
 
-def fetch_jobs_hh():
-    popular_lang = ('JavaScript', 'Java', 'Python',
-                    'Ruby', 'PHP', 'C++', 'C#',
-                    'C', 'Go', 'Shell'
-                    )
+def fetch_jobs_hh(popular_lang):
     url = 'https://api.hh.ru/vacancies'
     headers = {'user-agent': 'my-app/0.0.1'}
     results = {}
@@ -88,14 +81,8 @@ def fetch_jobs_hh():
     return results
 
 
-def fetch_jobs_sj():
+def fetch_jobs_sj(secret_key, access_token, popular_lang):
     load_dotenv()
-    secret_key = os.getenv('SECRET_KEY')
-    access_token = os.getenv('ACCESS_TOKEN')
-    popular_lang = ('JavaScript', 'Java', 'Python',
-                    'Ruby', 'PHP', 'C++', 'C#',
-                    'C', 'Go', 'Shell'
-                    )
     results = {}
     headers = {'X-Api-App-Id': f'{secret_key}',
                'Authorization': f'Bearer {access_token}'}
@@ -123,5 +110,21 @@ def fetch_jobs_sj():
 
 
 if __name__ == '__main__':
-    print(make_table(fetch_jobs_sj(), title='SuperJob Moscow'))
-    print(make_table(fetch_jobs_hh(), title='HeadHunter Moscow'))
+    load_dotenv()
+    secret_key = os.getenv('SECRET_KEY')
+    access_token = os.getenv('ACCESS_TOKEN')
+    popular_lang = (
+        'JavaScript', 'Java', 'Python',
+        'Ruby', 'PHP', 'C++', 'C#',
+        'C', 'Go', 'Shell'
+    )
+    print(
+        make_table(fetch_jobs_sj(
+                        secret_key=secret_key,
+                        access_token=access_token,
+                        popular_lang=popular_lang
+                    ),
+                   title='SuperJob Moscow'
+                   )
+    )
+    print(make_table(fetch_jobs_hh(popular_lang), title='HeadHunter Moscow'))
