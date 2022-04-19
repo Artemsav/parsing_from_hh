@@ -63,7 +63,7 @@ def fetch_jobs_hh(popular_lang):
         vacancies_processed = 0
         for page in count(0):
             params = {'specialization': '1.221', 'area': '1',
-                      'date_from': '2022-03-15', 'text': f'{language}',
+                      'date_from': '2022-03-15', 'text': language,
                       'only_with_salary': 'true', 'page': page}
             response = requests.get(url=url, headers=headers, params=params)
             response.raise_for_status()
@@ -84,7 +84,7 @@ def fetch_jobs_hh(popular_lang):
 def fetch_jobs_sj(secret_key, access_token, popular_lang):
     load_dotenv()
     results = {}
-    headers = {'X-Api-App-Id': f'{secret_key}',
+    headers = {'X-Api-App-Id': secret_key,
                'Authorization': f'Bearer {access_token}'}
     url = 'https://api.superjob.ru/2.0/vacancies/'
     for language in popular_lang:
@@ -95,8 +95,9 @@ def fetch_jobs_sj(secret_key, access_token, popular_lang):
             if page >= max_page_ammount:
                 break
             params = {'period': '30', 'catalogues': '48',
-                      'town': '4', 'keyword': f'{language}', 'page': page}
+                      'town': '4', 'keyword': language, 'page': page}
             response = requests.get(url=url, headers=headers, params=params)
+            response.raise_for_status()
             response_json = response.json()
             jobs = response_json.get('objects')
             for job in jobs:
