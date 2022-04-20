@@ -54,59 +54,64 @@ def make_table(results, title):
     return table_instance.table
 
 
-def fetch_jobs_hh(popular_lang):
+def fetch_jobs_hh(language):
     url = 'https://api.hh.ru/vacancies'
     headers = {'user-agent': 'my-app/0.0.1'}
     results = {}
-    for language in popular_lang:
-        salaries = []
-        vacancies_processed = 0
-        for page in count(0):
-            params = {'specialization': '1.221', 'area': '1',
-                      'date_from': '2022-03-15', 'text': language,
-                      'only_with_salary': 'true', 'page': page}
-            response = requests.get(url=url, headers=headers, params=params)
-            response.raise_for_status()
-            response_json = response.json()
-            if page >= int(response_json.get('pages')):
-                break
-            jobs = response_json.get('items')
-            for job in jobs:
-                if not predict_rub_salary_hh(job) is None:
-                    salaries.append(predict_rub_salary_hh(job))
-                    vacancies_processed += 1
-            results.update({language: {"vacancies_found": response_json.get('found'),
-                                       "vacancies_processed": vacancies_processed,
-                                       "average_salary": mean(salaries)}})
+    salaries = []
+    vacancies_processed = 0
+    for page in count(0):
+        params = {
+            'specialization': '1.221', 'area': '1',
+            'date_from': '2022-03-15', 'text': language,
+            'only_with_salary': 'true', 'page': page
+            }
+        response = requests.get(url=url, headers=headers, params=params)
+        response.raise_for_status()
+        response_json = response.json()
+        if page >= int(response_json.get('pages')):
+            break
+        jobs = response_json.get('items')
+        for job in jobs:
+            if not predict_rub_salary_hh(job) is None:
+                salaries.append(predict_rub_salary_hh(job))
+                vacancies_processed += 1
+        results[language] = {
+            "vacancies_found": response_json.get('found'),
+            "vacancies_processed": vacancies_processed,
+            "average_salary": mean(salaries)
+            }
     return results
 
 
-def fetch_jobs_sj(secret_key, access_token, popular_lang):
-    load_dotenv()
+def fetch_jobs_sj(secret_key, access_token, language):
     results = {}
     headers = {'X-Api-App-Id': secret_key,
                'Authorization': f'Bearer {access_token}'}
     url = 'https://api.superjob.ru/2.0/vacancies/'
-    for language in popular_lang:
-        salaries = []
-        vacancies_processed = 0
-        for page in count(0):
-            max_page_ammount = 25
-            if page >= max_page_ammount:
-                break
-            params = {'period': '30', 'catalogues': '48',
-                      'town': '4', 'keyword': language, 'page': page}
-            response = requests.get(url=url, headers=headers, params=params)
-            response.raise_for_status()
-            response_json = response.json()
-            jobs = response_json.get('objects')
-            for job in jobs:
-                if not predict_rub_salary_sj(job) is None:
-                    salaries.append(predict_rub_salary_sj(job))
-                    vacancies_processed += 1
-            results.update({language: {"vacancies_found": response_json.get('total'),
-                                       "vacancies_processed": vacancies_processed,
-                                       "average_salary": mean(salaries)}})
+    salaries = []
+    vacancies_processed = 0
+    for page in count(0):
+        max_page_ammount = 25
+        if page >= max_page_ammount:
+            break
+        params = {
+            'period': '30', 'catalogues': '48',
+            'town': '4', 'keyword': language, 'page': page
+            }
+        response = requests.get(url=url, headers=headers, params=params)
+        response.raise_for_status()
+        response_json = response.json()
+        jobs = response_json.get('objects')
+        for job in jobs:
+            if not predict_rub_salary_sj(job) is None:
+                salaries.append(predict_rub_salary_sj(job))
+                vacancies_processed += 1
+        results[language] = {
+            "vacancies_found": response_json.get('total'),
+            "vacancies_processed": vacancies_processed,
+            "average_salary": mean(salaries)
+            }
     return results
 
 
@@ -119,13 +124,14 @@ if __name__ == '__main__':
         'Ruby', 'PHP', 'C++', 'C#',
         'C', 'Go', 'Shell'
     )
-    print(
-        make_table(fetch_jobs_sj(
-                        secret_key=secret_key,
-                        access_token=access_token,
-                        popular_lang=popular_lang
-                    ),
-                   title='SuperJob Moscow'
-                   )
-    )
-    print(make_table(fetch_jobs_hh(popular_lang), title='HeadHunter Moscow'))
+    results_hh = {}
+    results_sj = {}
+    for language in popular_lang:
+        results_hh[language] = fetch_jobs_hh(language).get(language)
+        results_sj[language] = fetch_jobs_sj(
+            secret_key=secret_key,
+            access_token=access_token,
+            popular_lang=popular_lang
+            ).get(language)
+    print(make_table(results_sj, title='SuperJob Moscow'))
+    print(make_table(results_hh, title='HeadHunter Moscow'))
