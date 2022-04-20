@@ -68,16 +68,16 @@ def fetch_jobs_hh(language):
             }
         response = requests.get(url=url, headers=headers, params=params)
         response.raise_for_status()
-        response_json = response.json()
-        if page >= int(response_json.get('pages')):
+        response_dict = response.json()
+        if page >= int(response_dict.get('pages')):
             break
-        jobs = response_json.get('items')
+        jobs = response_dict.get('items')
         for job in jobs:
             if not predict_rub_salary_hh(job) is None:
                 salaries.append(predict_rub_salary_hh(job))
                 vacancies_processed += 1
         results[language] = {
-            "vacancies_found": response_json.get('found'),
+            "vacancies_found": response_dict.get('found'),
             "vacancies_processed": vacancies_processed,
             "average_salary": mean(salaries)
             }
@@ -101,14 +101,14 @@ def fetch_jobs_sj(secret_key, access_token, language):
             }
         response = requests.get(url=url, headers=headers, params=params)
         response.raise_for_status()
-        response_json = response.json()
-        jobs = response_json.get('objects')
+        response_dict = response.json()
+        jobs = response_dict.get('objects')
         for job in jobs:
-            if not predict_rub_salary_sj(job) is None:
+            if not predict_rub_salary_sj(job):
                 salaries.append(predict_rub_salary_sj(job))
                 vacancies_processed += 1
         results[language] = {
-            "vacancies_found": response_json.get('total'),
+            "vacancies_found": response_dict.get('total'),
             "vacancies_processed": vacancies_processed,
             "average_salary": mean(salaries)
             }
