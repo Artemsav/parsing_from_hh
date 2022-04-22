@@ -1,5 +1,4 @@
 import os
-from functools import reduce
 from itertools import count
 from statistics import mean
 
@@ -9,14 +8,17 @@ from terminaltables import AsciiTable
 
 
 def predict_salary(salary_from, salary_to):
-    if not salary_from:
-        return int(salary_to)*0.8
-    elif not salary_to:
-        return int(salary_from)*1.2
-    elif not salary_from and salary_to:
+    try:
+        salary_from = int(salary_from)
+        salary_to = int(salary_to)
+        if salary_from and salary_to > 0:
+            return (salary_from + salary_to)/2
+        elif salary_from > 0:
+            return salary_from*1.2
+        else:
+            return salary_to*0.8
+    except TypeError:
         return None
-    avg_salary = (int(salary_from) + int(salary_to))/2
-    return avg_salary
 
 
 def predict_rub_salary_hh(job):
@@ -32,9 +34,6 @@ def predict_rub_salary_sj(job):
         return None
     salary_from = job.get('payment_from')
     salary_to = job.get('payment_to')
-    if salary_from:
-        if salary_to:
-            return None
     return predict_salary(salary_from, salary_to)
 
 
@@ -73,8 +72,9 @@ def fetch_jobs_hh(language):
             break
         jobs = response_dict.get('items')
         for job in jobs:
-            if not predict_rub_salary_hh(job) is None:
-                salaries.append(predict_rub_salary_hh(job))
+            job_salary = predict_rub_salary_hh(job)
+            if job_salary:
+                salaries.append(job_salary)
                 vacancies_processed += 1
         results[language] = {
             "vacancies_found": response_dict.get('found'),
@@ -104,8 +104,9 @@ def fetch_jobs_sj(secret_key, access_token, language):
         response_dict = response.json()
         jobs = response_dict.get('objects')
         for job in jobs:
-            if not predict_rub_salary_sj(job):
-                salaries.append(predict_rub_salary_sj(job))
+            job_salary = predict_rub_salary_sj(job)
+            if job_salary:
+                salaries.append(job_salary)
                 vacancies_processed += 1
         results[language] = {
             "vacancies_found": response_dict.get('total'),
@@ -131,7 +132,7 @@ if __name__ == '__main__':
         results_sj[language] = fetch_jobs_sj(
             secret_key=secret_key,
             access_token=access_token,
-            popular_lang=popular_lang
+            language=language
             ).get(language)
     print(make_table(results_sj, title='SuperJob Moscow'))
     print(make_table(results_hh, title='HeadHunter Moscow'))
