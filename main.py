@@ -56,8 +56,8 @@ def make_table(results, title):
 def fetch_jobs_hh(language):
     url = 'https://api.hh.ru/vacancies'
     headers = {'user-agent': 'my-app/0.0.1'}
-    results = {}
     salaries = []
+    results = {}
     vacancies_processed = 0
     for page in count(0):
         params = {
@@ -71,25 +71,26 @@ def fetch_jobs_hh(language):
         if page >= int(fetch_jobs.get('pages')):
             break
         jobs = fetch_jobs.get('items')
-        for job in jobs:
-            job_salary = predict_rub_salary_hh(job)
-            if job_salary:
-                salaries.append(job_salary)
-                vacancies_processed += 1
-        results[language] = {
-            "vacancies_found": fetch_jobs.get('found'),
-            "vacancies_processed": vacancies_processed,
-            "average_salary": mean(salaries)
-            }
+        if jobs:
+            for job in jobs:
+                job_salary = predict_rub_salary_hh(job)
+                if job_salary:
+                    salaries.append(job_salary)
+                    vacancies_processed += 1
+            results = {
+                "vacancies_found": fetch_jobs.get('found'),
+                "vacancies_processed": vacancies_processed,
+                "average_salary": mean(salaries)
+                }
     return results
 
 
 def fetch_jobs_sj(secret_key, access_token, language):
-    results = {}
     headers = {'X-Api-App-Id': secret_key,
                'Authorization': f'Bearer {access_token}'}
     url = 'https://api.superjob.ru/2.0/vacancies/'
     salaries = []
+    results = {}
     vacancies_processed = 0
     for page in count(0):
         max_page_ammount = 25
@@ -103,16 +104,17 @@ def fetch_jobs_sj(secret_key, access_token, language):
         response.raise_for_status()
         fetch_jobs = response.json()
         jobs = fetch_jobs.get('objects')
-        for job in jobs:
-            job_salary = predict_rub_salary_sj(job)
-            if job_salary:
-                salaries.append(job_salary)
-                vacancies_processed += 1
-        results[language] = {
-            "vacancies_found": fetch_jobs.get('total'),
-            "vacancies_processed": vacancies_processed,
-            "average_salary": mean(salaries)
-            }
+        if jobs:
+            for job in jobs:
+                job_salary = predict_rub_salary_sj(job)
+                if job_salary:
+                    salaries.append(job_salary)
+                    vacancies_processed += 1
+            results = {
+                "vacancies_found": fetch_jobs.get('total'),
+                "vacancies_processed": vacancies_processed,
+                "average_salary": mean(salaries)
+                }
     return results
 
 
@@ -128,11 +130,11 @@ if __name__ == '__main__':
     results_hh = {}
     results_sj = {}
     for language in popular_lang:
-        results_hh[language] = fetch_jobs_hh(language).get(language)
+        results_hh[language] = fetch_jobs_hh(language)
         results_sj[language] = fetch_jobs_sj(
             secret_key=secret_key,
             access_token=access_token,
             language=language
-            ).get(language)
+            )
     print(make_table(results_sj, title='SuperJob Moscow'))
     print(make_table(results_hh, title='HeadHunter Moscow'))
