@@ -8,14 +8,12 @@ from terminaltables import AsciiTable
 
 
 def predict_salary(salary_from, salary_to):
-    salary_from = int(salary_from)
-    salary_to = int(salary_to)
     if salary_from and salary_to:
-        return (salary_from + salary_to)/2
+        return (int(salary_from) + int(salary_to))/2
     elif salary_from:
-        return salary_from*1.2
-    else:
-        return salary_to*0.8
+        return int(salary_from)*1.2
+    elif salary_to:
+        return int(salary_to)*0.8
 
 
 def predict_rub_salary_hh(job):
